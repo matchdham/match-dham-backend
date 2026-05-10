@@ -1,7 +1,6 @@
-
 /**
  * Match Dham - Final Vercel Backend (No app.listen)
- * All sensitive keys are hidden and optimized for Vercel deployment
+ * Optimized with Rate Limit fix for Vercel
  */
 
 require('dotenv').config();
@@ -37,11 +36,12 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-// Rate limiting
+// Rate limiting - Fixed for Vercel 'X-Forwarded-For' Error
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  message: 'Too many requests from this IP, please try again later.'
+  message: 'Too many requests from this IP, please try again later.',
+  validate: { xForwardedForHeader: false } // यह लाइन उस लाल एरर को खत्म कर देगी
 });
 app.use('/api/', limiter);
 
@@ -60,5 +60,6 @@ app.use('/api/firebase', firebaseRoutes);
 // Error Handling
 app.use(errorHandler);
 
-// VERY IMPORTANT: Export for Vercel (Do not use app.listen)
+// Export for Vercel
 module.exports = app;
+
