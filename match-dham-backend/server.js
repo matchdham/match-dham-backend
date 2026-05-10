@@ -62,9 +62,3 @@ app.use(errorHandler);
 
 // VERY IMPORTANT: Export for Vercel (Do not use app.listen)
 module.exports = app;
-const app = express();
-
-// This line fixes the 'X-Forwarded-For' validation error on Vercel
-app.set('trust proxy', 1); 
-
-app.use(cors());
