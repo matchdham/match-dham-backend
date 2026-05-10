@@ -2,32 +2,36 @@ const express = require('express');
 const axios = require('axios');
 const router = express.Router();
 
-// ✅ सही URL: https://api.cricketdata.org/v1 ( documentation के अनुसार)
-const CRICKET_API_BASE_URL = 'https://api.cricketdata.org/v1';
+// ✅ जो लिंक तुमने ब्राउज़र में टेस्ट किया, उसका बेस URL
+const CRICKET_API_BASE_URL = 'https://api.cricapi.com/v1';
 const CRICKET_API_KEY = process.env.CRICKET_API_KEY;
 
+/**
+ * GET /api/cricket/matches
+ * ब्राउज़र वाले लिंक के लॉजिक पर आधारित
+ */
 router.get('/matches', async (req, res) => {
   try {
-    // ✅ Endpoint को 'currentMatches' पर सेट किया गया है
+    // ✅ ब्राउज़र वाला सटीक रास्ता: matches?apikey=KEY&offset=0
     const response = await axios.get(
-      `${CRICKET_API_BASE_URL}/currentMatches?apikey=${CRICKET_API_KEY}`,
+      `${CRICKET_API_BASE_URL}/matches?apikey=${CRICKET_API_KEY}&offset=0`,
       { timeout: 15000 }
     );
 
-    // अगर API ने डेटा भेज दिया
+    // फ्रंटएंड को डेटा भेजें
     res.json({
       success: true,
-      data: response.data?.data || [],
-      count: response.data?.data ? response.data.data.length : 0
+      data: response.data.data || [],
+      status: response.data.status
     });
 
   } catch (error) {
-    // अगर फिर भी नेटवर्क एरर आए
     res.status(500).json({ 
       success: false, 
-      error: "API se data lene mein dikkat hai. Link ya Key check karein." 
+      error: "Backend API से कनेक्ट नहीं हो पा रहा है।" 
     });
   }
 });
 
-module.exports = router; 
+module.exports = router;
+
