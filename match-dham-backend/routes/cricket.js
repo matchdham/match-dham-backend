@@ -2,62 +2,60 @@ const express = require('express');
 const axios = require('axios');
 const router = express.Router();
 
-// ✅ Wahi base URL jo tumne Chrome mein test kiya
+const API_KEY = '26d7de00-35e1-47a8-aea7-54b76903ba57';
 const BASE_URL = 'https://api.cricapi.com/v1';
-const KEY = process.env.CRICKET_API_KEY;
 
-// 🏏 1. Saare Matches ki List (Current/Live)
-router.get('/matches', async (req, res) => {
-  try {
-    const response = await axios.get(`${BASE_URL}/currentMatches?apikey=${KEY}&offset=0`);
-    res.json({ success: true, data: response.data.data || [] });
-  } catch (err) {
-    res.status(500).json({ success: false, error: "Matches load nahi ho paaye" });
-  }
+// 🏏 1. Current Matches List
+router.get('/current-matches', async (req, res) => {
+    try {
+        const response = await axios.get(`${BASE_URL}/currentMatches?apikey=${API_KEY}&offset=0`);
+        res.json(response.data);
+    } catch (error) {
+        res.status(500).json({ error: "Data fetch karne mein dikkat hui" });
+    }
 });
 
-// 📊 2. Match ka Scorecard (Live Score)
-router.get('/score/:id', async (req, res) => {
-  try {
-    const matchId = req.params.id;
-    const response = await axios.get(`${BASE_URL}/match_scorecard?apikey=${KEY}&id=${matchId}`);
-    res.json({ success: true, data: response.data.data });
-  } catch (err) {
-    res.status(500).json({ success: false, error: "Score fetch nahi hua" });
-  }
-});
-
-// 📋 3. Match ki Detailed Info (Toss, Playing XI)
+// 📊 2. Match Info (Using ID)
 router.get('/match-info/:id', async (req, res) => {
-  try {
-    const matchId = req.params.id;
-    const response = await axios.get(`${BASE_URL}/match_info?apikey=${KEY}&id=${matchId}`);
-    res.json({ success: true, data: response.data.data });
-  } catch (err) {
-    res.status(500).json({ success: false, error: "Match info error" });
-  }
+    try {
+        const response = await axios.get(`${BASE_URL}/match_info?apikey=${API_KEY}&id=${req.params.id}`);
+        res.json(response.data);
+    } catch (error) {
+        res.status(500).json({ error: "Match info load nahi hui" });
+    }
 });
 
-// 👤 4. Player ki Profile (Records, Career)
-router.get('/player/:id', async (req, res) => {
-  try {
-    const playerId = req.params.id;
-    const response = await axios.get(`${BASE_URL}/players_info?apikey=${KEY}&id=${playerId}`);
-    res.json({ success: true, data: response.data.data });
-  } catch (err) {
-    res.status(500).json({ success: false, error: "Player details error" });
-  }
-});
-
-// 🏆 5. Series/Tournament List (IPL, World Cup)
+// 🏆 3. Series List & Search
 router.get('/series', async (req, res) => {
-  try {
-    const response = await axios.get(`${BASE_URL}/series?apikey=${KEY}&offset=0`);
-    res.json({ success: true, data: response.data.data || [] });
-  } catch (err) {
-    res.status(500).json({ success: false, error: "Series list error" });
-  }
+    const search = req.query.search || '';
+    try {
+        const response = await axios.get(`${BASE_URL}/series?apikey=${API_KEY}&offset=0&search=${search}`);
+        res.json(response.data);
+    } catch (error) {
+        res.status(500).json({ error: "Series data error" });
+    }
+});
+
+// 👤 4. Player Info (Using ID)
+router.get('/player/:id', async (req, res) => {
+    try {
+        const response = await axios.get(`${BASE_URL}/players_info?apikey=${API_KEY}&id=${req.params.id}`);
+        res.json(response.data);
+    } catch (error) {
+        res.status(500).json({ error: "Player details error" });
+    }
+});
+
+// 🚩 5. Countries with Flags
+router.get('/countries', async (req, res) => {
+    try {
+        const response = await axios.get(`${BASE_URL}/countries?apikey=${API_KEY}&offset=0`);
+        res.json(response.data);
+    } catch (error) {
+        res.status(500).json({ error: "Countries load nahi hui" });
+    }
 });
 
 module.exports = router;
+
 
