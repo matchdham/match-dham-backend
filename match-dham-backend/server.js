@@ -1,13 +1,9 @@
 /**
  * ========================================================
- * 🚀 MATCH DHAM BACKEND - MAIN SERVER.JS (FOLDER STRUCTURE FIXED)
+ * 🚀 MATCH DHAM BACKEND - MAIN SERVER.JS (SMART PATH FIXED)
  * ========================================================
  * Authorized by: Aryan Raj Dham
  * Managed by: Dham Manager Sahiba
- * * Folder Structure Connected:
- * - config/firebase-config.js
- * - routes/cricket.js | firebase.js | gemini.js
- * - utils/errorHandler.js | logger.js
  */
 
 require('dotenv').config();
@@ -17,11 +13,8 @@ const helmet = require('helmet');
 const compression = require('compression');
 const Parser = require('rss-parser');
 const NodeCache = require('node-cache');
-
-// Custom Utilities & Configurations
-const logger = require('./utils/logger');
-const errorHandler = require('./utils/errorHandler');
-require('./config/firebase-config'); // Automatically initializes Firebase Admin
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const cache = new NodeCache({ stdTTL: 3600 }); // 1 Hour Cache
@@ -36,11 +29,16 @@ app.use(cors({
     credentials: true
 }));
 app.use(helmet({
-    contentSecurityPolicy: false // Content block hone se bachane ke liye
+    contentSecurityPolicy: false // Data block hone se bachane ke liye
 }));
 app.use(compression());
 
-// ============ RSS PARSER FOR NEWS ============
+// ============ SYSTEM HEALTH CHECK ============
+app.get('/health', (req, res) => {
+    res.json({ success: true, message: "Match Dham Backend is Live and Running!", timestamp: new Date().toISOString() });
+});
+
+// ============ RSS FEED FOR NEWS ============
 const parser = new Parser({
     customFields: { item: ['description', 'link', 'pubDate'] }
 });
@@ -51,15 +49,7 @@ const RSS_FEEDS = [
     { name: 'NDTV Sports Cricket', url: 'https://feeds.ndtv.com/sports-cricket' }
 ];
 
-// ============ SYSTEM ROUTES ============
-
-// 1. Server Status Check
-app.get('/health', (req, res) => {
-    res.json({ success: true, message: "Match Dham Backend is Live and Running!", timestamp: new Date().toISOString() });
-});
-
-// 2. Cricket News Endpoint
-app.get('/api/cricket/news', async (req, res, next) => {
+app.get('/api/cricket/news', async (req, res) => {
     try {
         const cachedNews = cache.get('cricket_news');
         if (cachedNews) return res.json({ success: true, source: 'cache', data: cachedNews });
@@ -73,12 +63,11 @@ app.get('/api/cricket/news', async (req, res, next) => {
                     description: item.description || '',
                     link: item.link,
                     source: feed.name,
-                    published: item.pubDate || new Date().toLocaleDateString(),
-                    guid: item.guid || item.link
+                    published: item.pubDate || new Date().toLocaleDateString()
                 }));
                 allNews = [...allNews, ...items];
             } catch (err) {
-                logger.warn(`Feed Error (${feed.name}): ${err.message}`);
+                console.log(`Feed Error (${feed.name}):`, err.message);
             }
         }
 
@@ -87,40 +76,51 @@ app.get('/api/cricket/news', async (req, res, next) => {
         }
         
         cache.set('cricket_news', allNews);
-        res.json({ success: true, source: 'network', count: allNews.length, data: allNews });
+        res.json({ success: true, source: 'network', data: allNews });
     } catch (error) {
-        next(error);
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
-// ============ 🔥 DYNAMIC ROUTES CONNECTION (STRUCUTRE FIXED) ============
+// ============ 🔥 SMART ROUTER CONNECTION (AUTO-PATH FINDER) ============
+// यह लॉजिक खुद ही ढूंढेगा कि आपकी क्रिकेट फाइल किस फोल्डर में है ताकि 500 Error न आए
+let cricketRouter;
 
-// 3. Cricket Routes (Live Scores, Matches, Players)
-app.use('/api/cricket', require('./routes/cricket'));
+const pathsToTest = [
+    path.join(__dirname, 'routes', 'cricket.js'),
+    path.join(__dirname, 'Routes', 'cricket.js'),
+    path.join(__dirname, 'cricket.js')
+];
 
-// 4. Firebase Routes (Leaderboard, User Creation, Stats)
-app.use('/api/firebase', require('./routes/firebase'));
+if (fs.existsSync(pathsToTest[0])) {
+    cricketRouter = require('./routes/cricket');
+    console.log("✅ Loaded from: ./routes/cricket.js");
+} else if (fs.existsSync(pathsToTest[1])) {
+    cricketRouter = require('./Routes/cricket');
+    console.log("✅ Loaded from: ./Routes/cricket.js");
+} else if (fs.existsSync(pathsToTest[2])) {
+    cricketRouter = require('./cricket');
+    console.log("✅ Loaded from: ./cricket.js");
+}
 
-// 5. Gemini AI Routes (Chat, Match Analysis)
-app.use('/api/gemini', require('./routes/gemini'));
-
-// ============ GLOBAL ERROR HANDLER ============
-// Yeh aapki utils/errorHandler.js file ko automatically run karega
-app.use(errorHandler);
+// Routes को एक्सप्रेस के साथ जोड़ना
+if (cricketRouter) {
+    app.use('/api/cricket', cricketRouter);
+} else {
+    // Fallback: अगर फाइल नहीं मिली तो सर्वर क्रैश नहीं होगा, बल्कि स्क्रीन पर एरर बताएगा
+    app.use('/api/cricket', (req, res) => {
+        res.status(404).json({ 
+            success: false, 
+            error: "cricket.js file backend par kisi bhi sahi jagah nahi mili! Kripya apna folder check karein." 
+        });
+    });
+}
 
 // ============ START SERVER ============
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    logger.info(`
-    ╔════════════════════════════════════════════════╗
-    ║  🚀 MATCH DHAM BACKEND - STRUCTURE FIXED!       ║
-    ║  ✅ News API RSS Feeds Connected               ║
-    ║  ✅ routes/cricket.js Linked Perfectly         ║
-    ║  ✅ routes/firebase.js Database Active         ║
-    ║  ✅ routes/gemini.js AI Engine Ready           ║
-    ║  📍 PORT: ${PORT}                               ║
-    ╚════════════════════════════════════════════════╝
-    `);
+    console.log(`🚀 MATCH DHAM SERVER ACTIVE ON PORT: ${PORT}`);
 });
 
 module.exports = app;
+
