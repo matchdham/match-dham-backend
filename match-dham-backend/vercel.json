@@ -15,6 +15,5 @@
   ],
   "env": {
     "NODE_ENV": "production"
-    "FRONTEND_URL": "https://matchdham.netlify.app/"
   }
 }
