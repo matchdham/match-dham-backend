@@ -25,7 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 app.set('trust proxy', 1);
 
 app.use(cors({
-    origin: ['https://cdf7.netlify.app', 'http://localhost:3000', 'http://localhost:5000'],
+    origin: ['https://matchdham.netlify.app/', 'http://localhost:3000', 'http://localhost:5000'],
     credentials: true
 }));
 app.use(helmet({
